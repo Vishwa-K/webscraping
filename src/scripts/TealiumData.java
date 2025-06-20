@@ -1,0 +1,286 @@
+package scripts;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.TreeSet;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.testng.annotations.Test;
+import generics.BaseClass;
+
+interface teaFunction{
+	public void test(String s) throws IOException, InterruptedException;
+}
+
+public class TealiumData extends BaseClass{
+	static TreeSet<String> data = new TreeSet<String>();
+	static ArrayList<String> ids;
+
+	//	@Test(priority = 3)
+	public void test1() throws InterruptedException
+	{
+		//(//div[@class='main-container']/div[2]/div[1]/div/div/div)
+		pause(4);
+		List<WebElement> rows;
+
+		while(data.size()<708)
+		{
+			rows = driver.findElements(By.xpath("//div[@class='as-accordion-header']"));
+			System.out.println("Course size: "+rows.size());
+			String id;
+			int i;
+
+			for( i=1; i<=rows.size(); i++)
+			{
+				id = driver.findElement(By.xpath("(//div[@class='as-accordion-header'])["+i+"]//span[2]")).getText().trim();
+				data.add(id);
+			}	
+			System.out.println(data.size());
+			pause(3);
+			scrollTo(driver.findElement(By.xpath("(//div[@class='as-accordion-header'])[12]//span[2]")));
+			pause(3);
+		}
+
+		System.out.println("final size-> "+data.size());
+		System.out.println(data);
+	}
+
+	//@Test(priority = 4)
+	public void test4() throws InterruptedException, IOException
+	{
+		Helper help = new Helper();
+		ids = help.getID();
+		String id;
+		boolean opened = true;
+		List<WebElement> bodies;
+		String transformationRulesSummary;
+		String triggerRow;
+		String transformationSummaryRow;
+		Sheet sheet;
+
+		String conditionSummary, ruleName, triggerValue, triggerLabel;
+		List<WebElement> conditions;
+		List<WebElement> conditions2;
+		int row;
+
+		for(int k=600; k<ids.size(); k++)
+			//		for(int k=600; k<600; k++) //480
+			//for(int k=0; k<1; k++)
+		{
+			row = 0;
+			id = ids.get(k);
+			//id = "(166339)";
+			sheet = wb1.createSheet(id);
+			sheet.setDefaultColumnWidth(80);
+			sheet.setDefaultRowHeightInPoints(38);
+			System.out.println(k+1+". id is: "+id+"\n");
+			jsClick("(//div[.='up'])[1]");
+			pause(4);
+			opened = true;
+			while(opened)
+			{
+				try {
+					jsClick("//span[contains(.,'"+id+"')]/../../..");
+					opened = false;
+				}
+				catch(Exception e) {
+					scrollTo(driver.findElement(By.xpath("(//div[@class='as-accordion-header'])[10]//span[2]")));
+					pause(1);
+				}
+			}
+
+			//inside nav bar
+			wait8.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//span[contains(.,'Attribute Id')]")));
+			pause(2);
+
+			bodies = driver.findElements(By.xpath("//div[@class='linkedTransformationSummary']"));
+
+			for(int b=1; b<=bodies.size();b++)
+			{
+				transformationSummaryRow = driver.findElement(By.xpath("(//div[@class='linkedTransformationSummary'])["+b+"]//div[@class='transformationActionSummaryRow']")).getText();
+
+				//				triggerRow = driver.findElement(By.xpath("//div[@class='triggerRow']")).getText();
+				triggerLabel = driver.findElement(By.xpath("(//div[@class='linkedTransformationSummary'])["+b+"]//span[@class='triggerLabel']")).getText();
+				triggerValue = driver.findElement(By.xpath("(//div[@class='linkedTransformationSummary'])["+b+"]//span[@class='triggerValue']")).getText();
+
+				wb1.getSheet(id).createRow(row);
+				setExcelData(id, row,0, transformationSummaryRow);
+				row++;
+				wb1.getSheet(id).createRow(row);
+				setExcelData(id, row,0, triggerLabel);
+				setExcelData(id, row,1, triggerValue);
+				row++;
+
+				System.out.println(transformationSummaryRow+"\n"+triggerLabel+" : "+triggerValue);
+
+
+				//transformationRulesSummary = driver.findElement(By.xpath("//div[@class='transformationRulesSummary']")).getText();
+				try {
+					ruleName = driver.findElement(By.xpath("(//div[@class='linkedTransformationSummary'])["+b+"]//div[@class='ruleName']")).getText();
+					conditions = driver.findElements(By.xpath("(//div[@class='linkedTransformationSummary'])["+b+"]//div[@class='conditionsSummary']/div[@class='condition-container']"));
+					wb1.getSheet(id).createRow(row);
+					setExcelData(id, row,0, "IF");
+					setExcelData(id, row,1, ruleName);
+					row++;
+
+
+					for(int c=1; c<=conditions.size(); c++)
+					{
+						try {
+							//AND EXTRA here
+							conditionSummary =	driver.findElement(By.xpath("((//div[@class='linkedTransformationSummary'])["+b+"]//div[@class='conditionsSummary']/div[@class='condition-container'])["+c+"]//div[@class='pre-block-title']")).getText();
+							conditionSummary = conditionSummary.replaceAll("\n", " ");
+							wb1.getSheet(id).createRow(row);
+							setExcelData(id, row,0, conditionSummary);
+							row++;
+							System.out.println(conditionSummary);
+						}
+						catch(Exception e) {}
+
+						try {
+							conditions2 =	driver.findElements(By.xpath("((//div[@class='linkedTransformationSummary'])["+b+"]//div[@class='conditionsSummary']/div[@class='condition-container'])["+c+"]//div[@class='condition-block']//div[(@class='attr-block') or (@class='pre-block-title')]"));
+							for(int cc = 1; cc<=conditions2.size(); cc++)
+							{
+								try {
+									conditionSummary = driver.findElement(By.xpath("(((//div[@class='linkedTransformationSummary'])["+b+"]//div[@class='conditionsSummary']/div[@class='condition-container'])["+c+"]//div[@class='condition-block']//div[(@class='attr-block') or (@class='pre-block-title')])["+cc+"]")).getText();
+									conditionSummary = conditionSummary.replaceAll("\n", " ");
+									wb1.getSheet(id).createRow(row);
+									setExcelData(id, row,0, conditionSummary);
+									row++;
+									System.out.println(conditionSummary);
+
+								}
+								catch(Exception e) {}
+							}
+						}
+						catch(Exception e) {}
+
+					}
+
+				}
+				catch(Exception e) {
+
+				}
+
+				drawLine();
+			}
+			pause(1);
+			jsClick("//div[contains(@class,'slide_out')]/span");
+			pause(3);
+		}
+	}
+
+	@Test(priority = 5)
+	public void removeAnd() throws InterruptedException, IOException
+	{
+		Helper help = new Helper();
+		ids = help.getID();
+		String id;
+		String data;
+		int lastRow = 0;
+		int issue = 0;
+
+		for(int i=0; i<ids.size(); i++)
+		{
+			id= ids.get(i);
+			try {
+				lastRow = wb.getSheet(id).getLastRowNum();
+				System.out.println(i+1+"...");
+				
+			}
+			catch(Exception e) {
+				System.out.println(i+1+". Sheet not found!");
+				continue;
+			}
+			for(int row =0; row<lastRow; row++)
+			{
+				try {
+					data = getExcelData(id, row, 0);
+				}
+				catch(Exception e) {
+					break;
+				}
+				if(data.trim().startsWith("String"))
+				{
+//					row++;
+					row++;
+					try {
+						data = getExcelData(id, row, 0);
+					}
+					catch(Exception e) {
+						break;
+					}
+					if(data.trim().startsWith("String"))
+					{
+//						row++;
+//						row++;
+//						try {
+//							data = getExcelData(id, row, 0);
+//						}
+//						catch(Exception e) {
+//							break;
+//						}
+//						if(data.trim().equals("AND"))
+//						{
+//							row--;
+							row--;
+							
+							System.out.println(i+1+".-> "+id+"  Found the issue!");
+							//deleting row
+//							wb1.getSheet(id).shiftRows(row+1, lastRow, -1);
+							issue++;
+							break;
+//						}
+					}
+				}
+			}
+		}
+		System.out.println("Total sheets corrected = "+issue);
+	}
+
+
+	@Test (priority =6)
+	public void save() throws Exception, IOException, InterruptedException
+	{
+		saveReport();
+	}
+
+}
+
+
+
+
+
+
+
+
+//IF
+//String
+//String
+//Badge
+//Visitor ID
+
+
+
+
+
+
+
+
+
+
+
+
+/* 
+ * 
+final size-> 708
+[(ASUO) Likelihood to subm... the next 30 days (69839), ASUO - Abandoned Course ...within 24 hrs ) (166339), ASUO - Abandoned Course Drop (56618), ASUO - Alternate Student Email Address (12150), ASUO - Application Stage (59981), ASUO - Apply now clicks (7536), ASUO - Appointment Link (10306), ASUO - Canvas User Email (14356), ASUO - Canvas User ID (14435), ASUO - Canvas User ID_v2 (23943), ASUO - Click to Call (7540), ASUO - Click to Chat (7544), ASUO - Click to Email (7542), ASUO - Coach Message (10912), ASUO - Coach Segment (10314), ASUO - Course Abbreviation (28753), ASUO - Course Code (28749), ASUO - Course End Date (29513), ASUO - Course Name (28747), ASUO - Course Session (28745), ASUO - Course Start Date (28751), ASUO - Course Term (28743), ASUO - Created Applicat...pp Undergraduate (82658), ASUO - Created Applicati... SF App Graduate (82660), ASUO - Created Applicati... no EdPlus SF App (79801), ASUO - Created Application (UG or Grad) (59979), ASUO - Current Course Status (28755), ASUO - DEW Course (28769), ASUO - Degree Explorer (46627), ASUO - Degree Explorer (49752), ASUO - Email Name (10914), ASUO - Email Subject Line (10916), ASUO - Email Template Section (10918), ASUO - Initiated Drop/Withdraw (73180), ASUO - Lead API RFI Submitter (33791), ASUO - Likely CP (33785), ASUO - Prospect (7165), ASUO - RFI Event Timestamp (14358), ASUO - RFI Submit - Pearson Leads (54861), ASUO - RFI Submits (7538), ASUO - Server-side RFI Submits (64713), ASUO - Submitted Application (UG or Grad) (59977), ASUO - Success Coach Email (10308), ASUO - Success Coach First Name (10320), ASUO - Success Coach Last Name (10322), ASUO - Success Coach Name (10304), ASUO Lead Class (43812), ASUO Lead Source (50939), ASUO Lead Subclass (43814), ASUO SF Enterprise Email (44522), ASUO_Student_Email (47802), ASUO_anon_enroll_ml_decile (22147), ASUO_anon_enroll_ml_score (22149), ASUO_partial_app_enroll_ml_decile (22153), ASUO_rfi_enroll_ml_decile (22157), Active browser type (44), Active browser types (49), Active browser version (48), Active browser versions (53), Active device (46), Active devices (51), Active operating system (45), Active operating systems (50), Active platform (47), Active platforms (52), All Users (5368), Altryx Process Date (28763), Application id (15077), Application number (13303), Average visit duration in minutes (26), Average visits per week (29), Birth Country (15151), Birth Day (15153), Birth Month (15155), Birth Year (15157), CORP Lead Class (39108), CPE - ASU Alumni Graduat...ar - User Provided (6432), CPE - AVOW - 30 Day (5138), CPE - AVOW - 60 Day (5140), CPE - Abandoned Course Fees (5078), CPE - Abandoned Courses - Category ID (5102), CPE - Abandoned Courses - Course Category (5100), CPE - Abandoned Courses - Listing ID (5084), CPE - Abandoned Courses - Title (5098), CPE - Abandoned Courses - URL (5096), CPE - Abandoned Courses ...ategory (favorite) (5079), CPE - Abandoned Courses Fees (5268), CPE - Abandoned Courses Total Fees (5076), CPE - Abandoned Courses- Course Title (5086), CPE - Abandoned Courses... Catalog Category (5080), CPE - Abandoner Badge Assigned (5104), CPE - Accessed Canvas (16674), CPE - Active Courses - Course Category (5356), CPE - Active Courses - Listing ID (5092), CPE - Active Student (5186), CPE - Alumni Form Submission Date (6436), CPE - Cannot Cross Promote (5214), CPE - Canvas Access is current (14322), CPE - Canvas Assignment ID (14324), CPE - Canvas Course ID (14326), CPE - Canvas Data Format (14328), CPE - Canvas Enrollment ID (14330), CPE - Canvas Event Name (14332), CPE - Canvas First Name (21764), CPE - Canvas Grade (14334), CPE - Canvas Grading Complete (14336), CPE - Canvas Last Name (21766), CPE - Canvas Max Score (14338), CPE - Canvas Restricted Access (14340), CPE - Canvas Score (14342), CPE - Canvas State is current (14346), CPE - Canvas Submission ID (14348), CPE - Canvas User ID (14350), CPE - Canvas User ID (15433), CPE - Canvas User Name (14352), CPE - Canvas course name (15933), CPE - Catalog Category viewed - Tally (5462), CPE - Catalog Category viewed - Tally (favorite) (5461), CPE - Category Page Views - Visit (5166), CPE - Category Page Views - Visitor (5168), CPE - Completed Courses - Listing ID (5088), CPE - Completed Enrollment (6277), CPE - Coupon Eligible- Abandoned Courses (5122), CPE - Coupon Eligible- Viewed Courses (5124), CPE - Course Pageviews - Visit (5174), CPE - Course Pageviews - Visitor (5176), CPE - Customer Former Name (6434), CPE - Date of last LMS activity (15681), CPE - Dropped Courses - Listing ID (5090), CPE - Enrolled Canvas Cour...s - Historical File (5350), CPE - Enrolled Category ID- Historical File (5354), CPE - Enrolled Course Category - Historical File (5352), CPE - Enrolled Courses - Catalog ID (5118), CPE - Enrolled Courses - Course ID (5370), CPE - Enrolled Courses - Course Title (5108), CPE - Enrolled Courses - Total Fees (5272), CPE - Enrolled Courses - URL (5106), CPE - Enrolled Courses- Co...Category (favorite) (5119), CPE - Enrolled Courses- Course Category (5112), CPE - Enrolled Courses- Course Category (5120), CPE - Enrolled Courses- Listing ID (5110), CPE - Enrolled Student - Visit (5066), CPE - Enrolled Student - Visitor (6337), CPE - Enrollment Count - Last 30 Days (5154), CPE - Enrollment Count - Last 60 Days (5156), CPE - Enrollment Count Lifetime (5162), CPE - Enrollment Revenue ...l - 30 Day (online) (5675), CPE - Enrollment Revenue T... - 60 Day (offline) (5679), CPE - Enrollment Revenue T... - Lifetime(offline) (5146), CPE - Enrollment Revenue T... - Lifetime(online) (5685), CPE - Enrollment Revenue T...Online + 1 Offline) (5677), CPE - Enrollment Revenue T...Online + 1Offline) (5687), CPE - Enrollment Revenue T...nline + 1 Offline) (5683), CPE - Enrollment Revenue Total - 30 Day (offline) (5142), CPE - Enrollment Revenue Total - 60 Day (online) (5681), CPE - Enrollment Started - Course Category (5260), CPE - Enrollment Started - Course Category ID (5262), CPE - Enrollment Started - Course Title (5258), CPE - Enrollment Started - Listing Fee (5252), CPE - Enrollment Started - Listing Fee num (5572), CPE - Enrollment Started - Listing ID (5256), CPE - Enrollment Started - Listing ID (number) (5266), CPE - Enrollment Started - Listing URL (5254), CPE - Enrollment Started - Pathname (5539), CPE - Enrollment Total - Lifetime AVOW (5148), CPE - Enrollment Total - Online (5150), CPE - Enrollments - 30 Day (5158), CPE - Enrollments - 60 Day (5160), CPE - Enrollments - Lifetime (5274), CPE - General Abandoner (5576), CPE - Has Ever Enrolled (5358), CPE - Is Logged In - Visit (5202), CPE - L. A. Times completed enrollments (7311), CPE - L.A. Times Readers (10058), CPE - L.A. Times Subscribers (7348), CPE - Last Abandoned - Coupon Eligible (5453), CPE - Last Abandoned - Course Catalog ID (5451), CPE - Last Abandoned - Course Category (5382), CPE - Last Abandoned - Course Fees (5380), CPE - Last Abandoned - Course Fees (number) (5574), CPE - Last Abandoned - Course Listing ID (5378), CPE - Last Abandoned - Course Listing Title (5376), CPE - Last Abandoned - Course Pathname (5537), CPE - Last Abandoned - Course URL (5372), CPE - Last Abandoned - Exclude Communication (5977), CPE - Last Abandoned - Include Communication (6210), CPE - Last Abandoned - Listing ID (5374), CPE - Last Abandonment Date (5128), CPE - Last Category ID viewed (5240), CPE - Last Course Abandoned Fees (5074), CPE - Last Course Category Viewed (5238), CPE - Last Course Completed Date (5132), CPE - Last Course Dropped Date (5130), CPE - Last Course Viewed Pathname (5535), CPE - Last Course Viewed URL (5244), CPE - Last Enrolled Canvas...ID - Historical File (5344), CPE - Last Enrolled Course ...ID - Historical File (5348), CPE - Last Enrolled Course ...y - Historical File (5346), CPE - Last Enrollment - Course Catalog ID (5561), CPE - Last Enrollment - Course Category (5563), CPE - Last Enrollment - Course Category ID (6297), CPE - Last Enrollment - Course Fee (5559), CPE - Last Enrollment - Course Title (5557), CPE - Last Enrollment - Days Since (5164), CPE - Last Enrollment - Listing ID (5548), CPE - Last Enrollment Canva...ID - Historical File (5330), CPE - Last Enrollment Catalog ID - Historical File (5332), CPE - Last Enrollment Date (5126), CPE - Last Enrollment Listin...tle - Historical File (5334), CPE - Last Enrollment Price Paid - Historical File (5338), CPE - Last Enrollment Total (5152), CPE - Last Login Date (5204), CPE - Last Manual Enroll... - Course Category (5306), CPE - Last Manual Enroll...ourse Category ID (5308), CPE - Last Manual Enrollme...rporate Affiliation (5302), CPE - Last Manual Enrollment - Course ID (5298), CPE - Last Manual Enrollment - Listing ID (5300), CPE - Last Manual Enrollment - Listing Title (5304), CPE - Last Visit - Days Since (5170), CPE - Last Visit - Weeks Since (5172), CPE - Last order ID - Offline (5336), CPE - Last order ID - Online (5134), CPE - Lifetime Event Count Has Changed (11678), CPE - Manually Enrolled ...Course Category ID (5292), CPE - Manually Enrolled ...s- Course Category (5290), CPE - Manually Enrolled Courses - Course ID (5288), CPE - Manually Enrolled Courses - Listing ID (5286), CPE - Manually Enrolled Students (5190), CPE - New Abandonment (5889), CPE - Offline Course Compl...te - Historical File (5328), CPE - Offline Course Enrol...te - Historical File (5326), CPE - Online Enrollment Abandoners (5058), CPE - Online Enrollment Completed (5070), CPE - Online Enrollment Started (5068), CPE - Online Enrollment Status (5072), CPE - Order IDs (5136), CPE - Past Student (5188), CPE - Professional Skills Abandoners (5062), CPE - Project Management Abandoners (5060), CPE - Prospect (7167), CPE - RFI Event Timestamp (5849), CPE - RFI Submit - URL (6076), CPE - Registration Date (5206), CPE - San Diego Tribune Union Subscribers (23760), CPE - Submitted CPE Alumni Form (6464), CPE - Submitted RFI (5837), Canvas Course ID (5284), Career (13301), Corporate Partner Name (12146), Corporate_partner_likely...reats_Beneficiary (25886), Corporate_partner_likely_PFF (7086), Corporate_partner_likely_SCAP (7082), Corporate_partner_likely_Uber_Beneficiary (25882), Corporate_partner_likely_Uber_Driver (7084), Corporate_partner_likely_Uber_Staff (40460), Corporate_partner_likely_Ubereats_Driver (25884), Corportate_partner_likely_Neo (8861), Course Campus (42591), Current Data Source (64912), Data Extension Insert Date (28765), Date of birth (15085), Direct visit (14), Dom Domain (75939), ENT_SF_Contact_ID (11224), EdPlus SF Contact Enrol...ach Phone Number (47021), EdPlus SF Contact Enroll...ch Email Address (47015), EdPlus SF Contact Enroll...h Texting Number (47019), EdPlus SF Contact Enrollment Coach Chat Link (47023), EdPlus SF Contact Enrollment Coach Name (47017), EdPlus_Neo_state (14897), EdPlus_SF_Contact_ID (12152), EdPlus_SF_Contact_ID (12229), EdPlus_SF_Contact_ID_15_Digit (29324), EdPlus_SF_Contact_ID_15_Digit (29326), EdPlus_SF_RFI_Opportunity_ID (13315), EdPlus_asuo_admitted (12148), EdPlus_contact_stage (14899), EdPlus_last_contact_made_date (14901), EdPlus_sf_contactid_15 (22151), Email Address (5178), Email Address (5192), Email Address - Last (5478), Email Address- Historical File (5340), Enrollment term (13305), Entry URL (5), Event Category (24770), Event Label (24772), Event count (7), Exit URL (6), FB - Last Event Timestamp Unix (54075), Fan (30), First Name (5210), First UTM Source (6092), First UTM campaign (6096), First UTM content (6098), First UTM medium (6094), First choice session (13307), First visit (23), Frequent visitor (31), Full Name (5208), Full URL (24321), GA_client_ID (16802), Geo City (15165), Geo Country (15159), Geo State (14344), Google ClientID (25325), Google ID (5364), GradApp_ASU ID (15149), GradApp_US_Citizenship (15169), GradApp_address_line_1 (15143), GradApp_address_line_2 (15145), GradApp_arizona_residen...t_twelve_months (15087), GradApp_armed_services (15147), GradApp_degree_type (15141), GradApp_employment_status (15089), GradApp_enrollment_status_other_az_schools (15091), GradApp_enrollment_status_other_schools (15093), GradApp_national_service (15167), GradApp_previous_degree_earned (15099), GradApp_previous_schoo...e_degree_earned (15097), GradApp_previous_school_country (15095), GradApp_previous_school_date_first_attended (15105), GradApp_previous_school_date_last_attended (15107), GradApp_school_degree_earned (15101), Has Email Address (5200), Has Student ID (5198), Has opted out of email? (28761), IKC Complete (28767), InStride courses (16181), Last ENV (5709), Last Enrollment Status - Historical File (5322), Last Event Timestamp (22285), Last Name (5212), Last Page URL Grad App (75149), Last Page URL Under Grad App (76137), Last UTM campaign (6100), Last UTM content (6106), Last UTM medium (6104), Last UTM source (6102), Last UTM term (48201), Last event URL (17), Last event URL is for an InStride course (21514), Last event URL is for an Uber course (36542), Last visit (24), Lifetime UTM Campagin (6110), Lifetime UTM Content (6112), Lifetime UTM Medium (6114), Lifetime UTM Source (6108), Lifetime browser types used (57), Lifetime browser types used (favorite) (56), Lifetime browser versions used (63), Lifetime browser versions used (favorite) (62), Lifetime devices used (55), Lifetime devices used (favorite) (54), Lifetime event count (22), Lifetime operating systems used (59), Lifetime operating systems used (favorite) (58), Lifetime platforms used (61), Lifetime platforms used (favorite) (60), Lifetime visit count (21), Likelihood to Submit UG ... the next 30 days (69641), Likelihood to drop or with...n the next 14 days (69639), Likelihood to submit RFI w... in the next 7 days (69640), Likely - ASU Local (8590), Likely - ASUO (8584), Likely - CPE (8586), Likely - Starbucks (8588), Likely Career Focused (12533), Likely Cost Conscious (24311), Likely Freshman (24325), Likely Home School (24333), Likely Military (24327), Likely Military Active Duty (24331), Likely Military Veteran (24329), Likely Non-degree (24335), Likely Online Fit (24307), Likely Pearson lead (50144), Likely Primary Corp Partner (26449), Likely Primary Corp Partner (favorite) (26448), Likely Time Constrained (24309), Likely Transfer (24323), Listing ID - Historical File (5324), MAT 117 - Badge (64113), MAT 117 - Session A - Is Enrolled (28771), MAT 117 - Session B - Is Enrolled (31920), MAT 117 - Session C - Is Enrolled (30452), MAT 117S - Is Enrolled (30267), MAT117 - Instructor Email Address (28759), MAT117 - Instructor Full Name (28757), MAT117 - Values have changed (64115), ML Lead Score RFI APP (67272), Managed by Neo (64711), Mat117 - First Visit (64914), Middle Name (12144), Neo - Post (RFI and Direct App) Lead (56030), Neo - RFI & Direct App Converters (57206), Oasis environment menu model (57209), Page Dom Title (75544), Pathname (20136), Pearson - Started Grad app...itted application (42241), Pearson - Started UG app...itted application (42239), Pearson - Submitted Grad app (42235), Pearson - Submitted Undergrad app (42233), PeopleSoft - Course Drop Confirmed (79391), PeopleSoft - Drop Course Status (79395), PeopleSoft - Navigation - Add Class Block (79385), PeopleSoft - Navigation - Class Search (79389), PeopleSoft - Navigation - Schedule Planner (79397), PeopleSoft - Navigation - Shopping Cart (79383), PeopleSoft - Navigation - Swap Classes (79399), PeopleSoft - Navigation - Update Classes (79401), PeopleSoft - Navigation - View My Classes (79403), PeopleSoft - Navigation -...s By Class Number (79387), Phone Number (5184), Preferred First Name (16938), Preferred Full Name (16936), Preferred Last Name (16940), Preferred Non ASU Email (80003), Program (5869), Program Code (10652), Program key (13299), QA Created Account URL (67864), Query String (54273), RFIV2 Lead Score Greater Than Equal To 80 (82258), RFIs submitted for PFF (7045), RFIs submitted via Linkedin (6392), Referred visit (13), Residency Zipcode (10650), Returning visitor (27), SCAP Admitted (51338), SCAP Completed App (51336), SCAP Enrolled (51340), SCAP New Hire Eligible (51135), SCAP RFI (51332), SCAP Started App (51342), SCAP Submitted App (51334), SF ID_Starbucks (7824), Soft Profile - Audience (80853), Soft Profile - Education Opportunity (80855), Soft Profile - Email Address (83059), Soft Profile - Interest Areas (81264), Soft Profile - Student Category (80857), Soft Profile - Student Character (81266), Soft Profile - Student Interests (81268), Soft Profile - Student Type (80859), Starbucks Persona Types (8263), Starbucks_ID (13394), Starbucks_New_Hire_Eligibility_Status (50739), Starbucks_New_Hire_Seperation_Date (50741), Student EMPLID (10318), Student ID - Plain Text (5196), Student User ID (5342), Success Coach EMPLID (10312), Tealium Data Source (61751), Tealium Postman Badge (54073), Tealium Visitor ID (5526), Total direct visits (15), Total referred visits (16), Total time spent on site in minutes (25), UTM ecd22=12 (58581), UTM_ecd22 (33976), Uber courses (36540), Unbadged (32), UndergradApp_affiliate_id (15171), UndergradApp_application_campus (15075), UndergradApp_application_major (15081), UndergradApp_application_term (15083), UndergradApp_info_is_certified (15079), UndergradApp_student_t...egree_employee (15059), UndergradApp_student_t...egree_employee (15063), UndergradApp_student_t...eshman_academy (15065), UndergradApp_student_t...summer_program (15073), UndergradApp_student_type_degree_seeking (15061), UndergradApp_student_type_global_launch (15067), UndergradApp_student_type_never_affiliated (15069), UndergradApp_student_type_other (15071), User's Queries gsc.q (78528), Visit duration (12), Visit end (11), Visit start (10), Visited CPE Canvas (20882), Weeks since first visit (28), [APS]|[AS]-Initiated Drop w...icks within 24 hrs) (166341), [APS]|[AS]-Initiated Drop...ut Confirmed Drop (101244), [APS]|[AS]-Peoplesoft Dat...Soft Events Only) (168335), [APS]|[AS]-Peoplesoft Date of Drop Initiation (101242), [AS]-Edplus Contact ID|Application ID (159187), [ESF][LAPI][UDO]-Pearson...plication Account (42237), [ESF][URL]|[AS]-EdPlus Managed by Pearson (64709), [ESF]|[AS] - Campaign Member Status (135207), [ESF]|[AS] - Member Added to Campaign Date (135205), [ESF]|[AS]-Application Closed Lost (125224), [ESF]|[AS]-Managed By Corporate (14895), [ESF]|[AS]-SF Application Stage is Assigned (13309), [EnSC][AS]-Enrolled Session Code (94858), [EnSC][AS]-Enrolled Term Code (94860), [EnSC]|[AS]-ASU Current Enrolled Students (105005), [EnSC]|[AS]-ASUO Canvas User ID (13846), [EnSC]|[AS]-Academic Standing (131411), [EnSC]|[AS]-Admit Type (131425), [EnSC]|[AS]-Award Information (167738), [EnSC]|[AS]-Barrett Honor Status (131634), [EnSC]|[AS]-College Program Description (94854), [EnSC]|[AS]-Confirmed First Name (160773), [EnSC]|[AS]-Confirmed Last Name (160974), [EnSC]|[AS]-Cumulative GPA (131413), [EnSC]|[AS]-Date of Last Dropped Course (94866), [EnSC]|[AS]-Directory Hold (163163), [EnSC]|[AS]-Dropped Courses (94868), [EnSC]|[AS]-Eligible to Enroll (94862), [EnSC]|[AS]-Enrolled Courses (94870), [EnSC]|[AS]-Enrolled Major Plan Code (94852), [EnSC]|[AS]-Enrollment Status (56422), [EnSC]|[AS]-Enterprise SalesCloud Contact ID (10310), [EnSC]|[AS]-Ethnicity (15161), [EnSC]|[AS]-First Generation (131628), [EnSC]|[AS]-Gender (15163), [EnSC]|[AS]-Major Plan Description (94856), [EnSC]|[AS]-Managed by Corporate (167734), [EnSC]|[AS]-Number of Enrolled Courses (94872), [EnSC]|[AS]-Overdue Balance (131417), [EnSC]|[AS]-Pell Eligible (131638), [EnSC]|[AS]-Residency (131405), [EnSC]|[AS]-SF Today Date (102630), [EnSC]|[AS]-Student Academic Career (10316), [EnSC]|[AS]-Student Success Coach Assigned (10324), [EnSC]|[AS]-Total Credits (131421), [EnSC]|[AS]-Users with En...sCloud Contact ID (29515), [EnSc][AS]-Campus (94864), [EnSc][AS]-Enrolled College Program Code (94850), [GCP][AS]-Partial App ML...ent microseconds (163762), [GCP][AS]-RFI ML SCORE Event microseconds (163562), [GCP][LAPI][SFRFI]|[AS]-Direct App Indicator (141351), [GCP][LAPI][SFRFI]|[AS]-User with Direct App (141353), [GCP][LAPI]|[AS]-Consolid... in Microseconds (163560), [GCP][LAPI]|[AS]-Consolid... in Microseconds (163764), [GCP]|[AS]-ASUO Partial ... or has CHANGED (114311), [GCP]|[AS]-ASUO Partial A...L Score (x5000) (114309), [GCP]|[AS]-ASUO Partial App Enroll ML Score (22155), [GCP]|[AS]-ASUO RFI Enroll ML Score (22159), [GCP]|[AS]-ASUO RFI ML S...or has CHANGED (114313), [GCP]|[AS]-ASUO RFI ML Score (x5000) (114307), [GCP]|[AS]-PARTIAL APP M...Event Timestamp (129426), [GCP]|[AS]-RFI ML SCORE Event Timestamp (129424), [GTMSS]|[AS]-Application Start Graduate (125624), [GTMSS]|[AS]-Application Submit Graduate (125626), [GTMSS]|[AS]-Application...aduate Timestamp (170714), [GTMSS]|[AS]-Application...duate Timestamp (170716), [GTMSS]|[AS]-Application...it Undergraduate (125628), [GTMSS]|[AS]-Application...rt Undergraduate (125622), [GTMSS]|[AS]-Apply Now B...Click Undergrad (116697), [GTMSS]|[AS]-Clicked to Call (116689), [GTMSS]|[AS]-Clicked to Chat (116691), [GTMSS]|[AS]-Clicked to Email (116693), [GTMSS]|[AS]-dclid (172900), [GTMSS]|[AS]-dclid OR gclid (172902), [GTMSS]|[AS}-Apply Now B... Click Graduate (116699), [GTM]|[AS]-Dreamscape Le...Registered Acts (132234), [GTM]|[AS]-Dreamscape Learn Split Indicator (132434), [LAPI][AS]-Partial APP D...CH microseconds (162962), [LAPI][AS]-RFI DateTime EPOCH microseconds (86879), [LAPI][TiQ]|[AS]-Likely Military Final (171115), [LAPI]|[AS]-Confirmed Military (171113), [LAPI]|[AS]-Confirmed Military Final (171909), [LAPI]|[AS]-Event Type API (41569), [LAPI]|[AS]-Lead API RFI ID (82458), [LAPI]|[AS]-Lead API RFI ID OLD (33787), [LAPI]|[AS]-Lead API Subscriber (39909), [LAPI]|[AS]-RFI DateTime (84048), [LAPI]|[AS]-RFI DateTime EPOCH (84646), [LECC]|[AS]-Area of Interest from RFI submit (91845), [LECC]|[AS]-Enrollment Email Address (92244), [LECC]|[AS]-RFI Submit Email Address (92044), [LECC]|[AS]-User Has Enrolled (91448), [LECC]|[AS]-User with Enrollment (93634), [LECC]|[AS]-User with RFI Submit (91446), [M117]|[AS]-ASUO Canvas User ID (85046), [M117]|[AS]-MAT 117 Show Modal (85245), [MULTI]|[AS]-Email Address Set (108962), [Multi][AS]- Neo Lead Score for GCM (85841), [Multi]|[AS]-Aggregated Email Address (106984), [Multi]|[AS]-All Inclusive Apps (146895), [Multi]|[AS]-All Inclusive Apps Timestamp (146901), [Multi]|[AS]-All Inclusive RFI (146897), [Multi]|[AS]-All Inclusive RFI Timestamp (146899), [Multi]|[AS]-Count of Mis...d Google ClientID (136792), [Multi]|[AS]-Email Address CONTAINS asu.edu (147892), [Multi]|[AS]-Mismatched G...lientID Indicator (136794), [Multi]|[AS]-RFI and App...stamp Comparison (146903), [Multi]|[AS]-Set of Misma...d Google ClientID (136790), [Multi]|[AS]-User with Mi...d Google ClientID (136796), [QStr][URL]|[AS]-Pearson ...Session Definition (54665), [QStr]|[AS]-ASUO Canvas User ID (84445), [SCC]|[AS]-SCC Portal Add (169721), [SFRFI]|[AS]-Edplus_SF_RFI_ID (13317), [SFRFI]|[AS]-Edplus_SF_RFI_ID Datetime (144516), [SFRFI]|[AS]-SF Application Record ID (145510), [SH][TiQ]|[AS]-Study Hall ...y Student Interest (100846), [SH][TiQ]|[AS]-Study Hall Student Interest (98863), [SH][TiQ]|[AS]-Study Hall Student Type (98661), [SH][TiQ]|[AS]-Study Hall User Email (98659), [SH][TiQ]|[AS]-Study Hall Visitor (99854), [SH][TiQ]|[AS]-Study Hall...d Email Submitted (99062), [TEAL]|[AS][Static]-Integer 1000 (54077), [TEAL]|[AS][Static]-Integer 125 (114303), [TEAL]|[AS][Static]-Integer 1500 (114305), [TEAL]|[AS][Static]-Integer 5000 (139769), [TEST][TiQ]|[AS]-Likely Military Final (173298), [TEST]|[AS]-Abandoned Course Drop (157602), [TEST]|[AS]-Career Keys P...mit (No Removal) (123044), [TEST]|[AS]-Career Keys R...mit (No Removal) (123046), [TEST]|[AS]-Career Values...mit (No Removal) (123048), [TEST]|[AS]-Career Values...mit (No Removal) (123050), [TEST]|[AS]-Confirmed Military (170316), [TEST]|[AS]-DSL CANVAS USER EMAIL (139570), [TEST]|[AS]-Initiated Dro...moval Enrichment) (157604), [TEST]|[AS]-Likely Attributes Changed (167334), [TEST]|[AS]-Likely Military (167332), [TEST]|[AS]-Peoplesoft Date of Drop Initiation (161578), [TEST]|[AS]-Regex Email Address (93234), [TEST]|[AS]-Test Array (167330), [TEST]|[AS]-Test Array (favorite) (167329), [TEST]|[AS]-USER EMAIL (138378), [TEST]|[AS]-Visit Scoped...D or has CHANGED (161173), [TEST]|[AS]-Visit Scoped...D or has CHANGED (161175), [TIQ]|[AS]-ASUO Canvas User ID (79184), [TIQ]|[AS]-ASUO Click to Chat (109162), [TIQ]|[AS]-Active User (110944), [TiQ][QSTR]|[AS]-Gclid Changed (128827), [TiQ][URL]|[AS]-Likely Attributes Changed (159782), [TiQ][URL]|[AS]-Likely Barrett Honors (148092), [TiQ][URL]|[AS]-Likely Campus Immersion (161576), [TiQ][URL]|[AS]-Likely Career Focused (97848), [TiQ][URL]|[AS]-Likely Cost Conscious (97850), [TiQ][URL]|[AS]-Likely Freshman (164361), [TiQ][URL]|[AS]-Likely Graduate (97860), [TiQ][URL]|[AS]-Likely Home School (97858), [TiQ][URL]|[AS]-Likely International (97854), [TiQ][URL]|[AS]-Likely LECC (161574), [TiQ][URL]|[AS]-Likely Military (89656), [TiQ][URL]|[AS]-Likely Non Degree (164359), [TiQ][URL]|[AS]-Likely Online (97864), [TiQ][URL]|[AS]-Likely Scholarship (97852), [TiQ][URL]|[AS]-Likely Transfer (97856), [TiQ][URL]|[AS]-Likely ULC (161572), [TiQ][URL]|[AS]-Likely Under Graduate (97862), [TiQ][URL]|[AS]-Student ... Tally Timestamp (120867), [TiQ][URL]|[AS]-Student Fo...d Tally Timestamp (90646), [TiQ][URL]|[AS]-Student Foc...ifetime) (favorite) (90649), [TiQ][URL]|[AS]-Student Foc...rd Tally (Lifetime) (90650), [TiQ][URL]|[AS]-Student Foc...rd Tally (favorite) (88463), [TiQ][URL]|[AS]-Student Foci Keyword Tally (88464), [TiQ][URL]|[AS]-Student M... Tally Timestamp (90648), [TiQ][URL]|[AS]-Student Mo... Tally (Lifetime) (157205), [TiQ][URL]|[AS]-Student Mo...d Tally (Lifetime) (90652), [TiQ][URL]|[AS]-Student Mo...d Tally (favorite) (120864), [TiQ][URL]|[AS]-Student Mo...etime) (favorite) (157204), [TiQ][URL]|[AS]-Student Mo...rd Tally (favorite) (88662), [TiQ][URL]|[AS]-Student Mod...fetime) (favorite) (90651), [TiQ][URL]|[AS]-Student Mode Keyword Tally (120865), [TiQ][URL]|[AS]-Student Modifier Keyword Tally (88663), [TiQ][URL]|[AS]-Student T...d Tally Timestamp (90644), [TiQ][URL]|[AS]-Student Ty...rd Tally (Lifetime) (90654), [TiQ][URL]|[AS]-Student Ty...rd Tally (favorite) (89059), [TiQ][URL]|[AS]-Student Typ...fetime) (favorite) (90653), [TiQ][URL]|[AS]-Student Type Keyword Tally (89060), [TiQ]|[AS]-Application Portal Login (151855), [TiQ]|[AS]-Closed Lost Recent Activity Count (125222), [TiQ]|[AS]-Likely Degree Explorer (152259), [TiQ]|[AS]-Number of Visited Degree Pages (152257), [TiQ]|[AS]-Student Interest Aggregated Tally (138577), [TiQ]|[AS]-Student Interest...d Tally (favorite) (138576), [TiQ]|[AS]-Student Primary Persona (138579), [TiQ]|[AS]-Visited Degree Pages (152255), [TiQ]|[AS]-Web Activity Timestamp (157005), [UDO]|[AS]-ASUO Created ...lication Account (59971), [UDO]|[AS]-ASUO Created ...n Account (Visit) (67868), [UDO]|[AS]-ASUO Created Application Account (59561), [UDO]|[AS]-ASUO Created...lication Account (59969), [UDO]|[AS]-ASUO Submitte...Grad Application (59975), [UDO]|[AS]-ASUO Submitted Grad Application (59973), [UDO]|[AS]-Career Keys Partial App Submit (119471), [UDO]|[AS]-Career Keys RFI Submit (119475), [UDO]|[AS]-Career Values Partial App Submit (119473), [UDO]|[AS]-Career Values RFI Submit (119477), [UDO]|[AS]-Event Action (24768), [UDO]|[AS]-Neo UTM_ecd22 (110349), [UDO]|[AS]-Rapid Data Da...ource Candidacy (127034), [UDO]|[AS]-Tealium Data Source (97252), [UDO]|[AS]-Tealium Event (24774), [UDO]|[AS]-Tealium Session ID (128829), [UDO]|[AS}-PeopleSoft - ...se Drop Confirmed (87670), [URL]|[AS]-ASUO All Site Visitors (57406), [URL]|[AS]-Converted Pag...L Under Grad App (87870), [WPCML][AS]- RFI to Enroll Lead Score (94434), [WPCML][AS]-RFI timestamp (96460), _fbc (61549), _fbp (61551), _gclid (74558), enrolled_mat117 (79180), enrolled_mat142 (79182), is_enrolled_in_MAT 117 (33600), lead_class_api (41571), lead_subclass_api (41573), mat117_to_mat142 (79178), scc_portal_audience (12306), student_emplid (11070), test user (6305)]
+
+ * 
+ * 
+ * 
+ * */
